@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>DUO ARENA — 2 Player Games</title>
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="brand">
+        <div class="brand-logo">D</div>
+
+        <div>
+            <h1>DUO ARENA</h1>
+            <p>100 games. 2 players. Endless fun.</p>
+        </div>
+    </div>
+
+    <nav>
+        <a href="#games">Games</a>
+        <a href="#modes">Modes</a>
+        <a href="#categories">Categories</a>
+    </nav>
+
+</header>
+
+
+<main>
+
+<section class="hero">
+
+    <div class="hero-content">
+
+        <span class="badge">100 PLAYABLE GAMES</span>
+
+        <h2>
+            Play together.
+            <br>
+            <span>Challenge anyone.</span>
+        </h2>
+
+        <p>
+            Play with a friend on the same device,
+            challenge an active bot, or connect online
+            for multiplayer matches.
+        </p>
+
+        <div class="hero-buttons">
+
+            <a class="primary-btn" href="#games">
+                Explore Games
+            </a>
+
+            <a class="secondary-btn" href="#modes">
+                Choose Mode
+            </a>
+
+        </div>
+
+    </div>
+
+
+    <div class="hero-art">
+
+        <div class="arena-card">
+
+            <div class="player p1">
+                <div class="avatar">P1</div>
+                <strong>PLAYER 1</strong>
+            </div>
+
+            <div class="vs">
+                VS
+            </div>
+
+            <div class="player p2">
+                <div class="avatar">P2</div>
+                <strong>PLAYER 2</strong>
+            </div>
+
+        </div>
+
+    </div>
+
+</section>
+
+
+<section id="modes" class="section">
+
+    <div class="section-heading">
+        <span>GAME MODES</span>
+        <h2>Choose how you want to play</h2>
+    </div>
+
+
+    <div class="mode-grid">
+
+        <button class="mode-card" onclick="setMode('offline')">
+
+            <div class="mode-icon">LOCAL</div>
+
+            <h3>2 Player Offline</h3>
+
+            <p>
+                Two people can play on the same
+                computer or phone.
+            </p>
+
+            <strong>Play locally →</strong>
+
+        </button>
+
+
+        <button class="mode-card" onclick="setMode('bot')">
+
+            <div class="mode-icon">BOT</div>
+
+            <h3>Play With Bot</h3>
+
+            <p>
+                Challenge a responsive computer
+                opponent.
+            </p>
+
+            <strong>Challenge bot →</strong>
+
+        </button>
+
+
+        <button class="mode-card" onclick="setMode('online')">
+
+            <div class="mode-icon">NET</div>
+
+            <h3>Online Multiplayer</h3>
+
+            <p>
+                Play against another player
+                through the internet.
+            </p>
+
+            <strong>Play online →</strong>
+
+        </button>
+
+    </div>
+
+</section>
+
+
+<section id="categories" class="section">
+
+    <div class="section-heading">
+        <span>CATEGORIES</span>
+        <h2>Find your type of game</h2>
+    </div>
+
+
+    <div class="category-buttons">
+
+        <button onclick="filterCategory('all')">
+            All Games
+        </button>
+
+        <button onclick="filterCategory('board')">
+            Board
+        </button>
+
+        <button onclick="filterCategory('card')">
+            Card
+        </button>
+
+        <button onclick="filterCategory('arcade')">
+            Arcade
+        </button>
+
+        <button onclick="filterCategory('puzzle')">
+            Puzzle
+        </button>
+
+        <button onclick="filterCategory('sports')">
+            Sports
+        </button>
+
+        <button onclick="filterCategory('action')">
+            Action
+        </button>
+
+        <button onclick="filterCategory('quick')">
+            Quick Games
+        </button>
+
+    </div>
+
+</section>
+
+
+<section id="games" class="games-section">
+
+    <div class="games-header">
+
+        <div>
+            <span>GAME LIBRARY</span>
+            <h2>100 Games</h2>
+        </div>
+
+        <input
+            id="search"
+            type="search"
+            placeholder="Search games..."
+            aria-label="Search games"
+        >
+
+    </div>
+
+
+    <div id="gameGrid" class="game-grid"></div>
+
+</section>
+
+
+<section class="footer-cta">
+
+    <h2>Ready for a match?</h2>
+
+    <p>
+        Pick a game and start playing.
+    </p>
+
+    <a href="#games" class="primary-btn">
+        Start Playing
+    </a>
+
+</section>
+
+</main>
+
+
+<footer>
+
+    <strong>DUO ARENA</strong>
+
+    <p>
+        A 2-player game collection.
+    </p>
+
+</footer>
+
+
+<script src="app.js"></script>
+
+</body>
+</html>
