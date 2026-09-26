@@ -1,0 +1,845 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Tic-Tac-Toe | Duo Arena</title>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+
+    font-family: Arial, sans-serif;
+
+    background:
+        radial-gradient(circle at top, #0b6b3b, transparent 45%),
+        #031c11;
+
+    color: white;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    padding: 25px;
+}
+
+.game {
+    width: 100%;
+    max-width: 650px;
+
+    text-align: center;
+
+    background: rgba(5, 38, 23, 0.92);
+
+    border: 1px solid rgba(155,234,60,0.2);
+
+    border-radius: 28px;
+
+    padding: 30px;
+
+    box-shadow: 0 30px 80px rgba(0,0,0,.45);
+}
+
+.back {
+    display: inline-block;
+
+    color: #a9c5b5;
+
+    text-decoration: none;
+
+    margin-bottom: 15px;
+}
+
+.back:hover {
+    color: white;
+}
+
+h1 {
+    margin: 5px 0;
+
+    font-size: 42px;
+}
+
+.subtitle {
+    color: #a9c5b5;
+
+    margin-bottom: 25px;
+}
+
+.modes {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    flex-wrap: wrap;
+
+    margin-bottom: 25px;
+}
+
+.mode {
+    border: 1px solid rgba(255,255,255,.12);
+
+    background: #082b1a;
+
+    color: white;
+
+    padding: 12px 17px;
+
+    border-radius: 12px;
+
+    cursor: pointer;
+}
+
+.mode.active {
+    background: #13b866;
+
+    color: #032012;
+
+    font-weight: bold;
+}
+
+.status {
+    margin: 20px 0;
+
+    font-size: 19px;
+
+    font-weight: bold;
+
+    color: #9bea3c;
+}
+
+.board {
+    width: min(420px, 100%);
+
+    aspect-ratio: 1;
+
+    margin: auto;
+
+    display: grid;
+
+    grid-template-columns: repeat(3, 1fr);
+
+    gap: 10px;
+}
+
+.cell {
+    border: none;
+
+    border-radius: 18px;
+
+    background: #0a4127;
+
+    color: white;
+
+    font-size: clamp(45px, 10vw, 80px);
+
+    font-weight: 900;
+
+    cursor: pointer;
+
+    transition: .15s;
+}
+
+.cell:hover {
+    background: #0d5734;
+}
+
+.cell.x {
+    color: #9bea3c;
+}
+
+.cell.o {
+    color: #54d6ff;
+}
+
+.cell.win {
+    background: #147a48;
+}
+
+.controls {
+    margin-top: 25px;
+
+    display: flex;
+
+    justify-content: center;
+
+    gap: 12px;
+}
+
+button.action {
+    border: none;
+
+    padding: 13px 20px;
+
+    border-radius: 12px;
+
+    background: #9bea3c;
+
+    color: #032012;
+
+    font-weight: 900;
+
+    cursor: pointer;
+}
+
+.score {
+    display: flex;
+
+    justify-content: center;
+
+    gap: 30px;
+
+    margin-top: 25px;
+
+    color: #a9c5b5;
+}
+
+.score strong {
+    color: white;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="game">
+
+    <a class="back" href="../index.html">
+        ← Back to Duo Arena
+    </a>
+
+    <h1>Tic-Tac-Toe</h1>
+
+    <p class="subtitle">
+        Challenge a friend or play against the bot.
+    </p>
+
+
+    <div class="modes">
+
+        <button
+            class="mode active"
+            id="twoPlayer"
+            type="button">
+            2 Players
+        </button>
+
+        <button
+            class="mode"
+            id="botMode"
+            type="button">
+            Play vs Bot
+        </button>
+
+    </div>
+
+
+    <div
+        class="status"
+        id="status"
+        aria-live="polite">
+        Player X's turn
+    </div>
+
+
+    <div
+        class="board"
+        id="board">
+
+        <button class="cell" data-index="0"></button>
+        <button class="cell" data-index="1"></button>
+        <button class="cell" data-index="2"></button>
+
+        <button class="cell" data-index="3"></button>
+        <button class="cell" data-index="4"></button>
+        <button class="cell" data-index="5"></button>
+
+        <button class="cell" data-index="6"></button>
+        <button class="cell" data-index="7"></button>
+        <button class="cell" data-index="8"></button>
+
+    </div>
+
+
+    <div class="controls">
+
+        <button
+            class="action"
+            id="restart"
+            type="button">
+            New Game
+        </button>
+
+    </div>
+
+
+    <div class="score">
+
+        <div>
+            X:
+            <strong id="scoreX">0</strong>
+        </div>
+
+        <div>
+            Draws:
+            <strong id="scoreDraw">0</strong>
+        </div>
+
+        <div>
+            O:
+            <strong id="scoreO">0</strong>
+        </div>
+
+    </div>
+
+</div>
+
+
+<script>
+
+const cells =
+    document.querySelectorAll(".cell");
+
+const statusText =
+    document.getElementById("status");
+
+const restart =
+    document.getElementById("restart");
+
+const twoPlayer =
+    document.getElementById("twoPlayer");
+
+const botMode =
+    document.getElementById("botMode");
+
+const scoreX =
+    document.getElementById("scoreX");
+
+const scoreO =
+    document.getElementById("scoreO");
+
+const scoreDraw =
+    document.getElementById("scoreDraw");
+
+
+let board = [
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    "",
+    ""
+];
+
+let currentPlayer = "X";
+
+let gameOver = false;
+
+let playingBot = false;
+
+let scores = {
+    X: 0,
+    O: 0,
+    draw: 0
+};
+
+
+const winningPatterns = [
+
+    [0, 1, 2],
+    [3, 4, 5],
+    [6, 7, 8],
+
+    [0, 3, 6],
+    [1, 4, 7],
+    [2, 5, 8],
+
+    [0, 4, 8],
+    [2, 4, 6]
+
+];
+
+
+cells.forEach(cell => {
+
+    cell.addEventListener(
+        "click",
+        () => {
+
+            const index =
+                Number(cell.dataset.index);
+
+            playMove(index);
+
+        }
+    );
+
+});
+
+
+function playMove(index) {
+
+    if (gameOver) {
+        return;
+    }
+
+    if (board[index] !== "") {
+        return;
+    }
+
+    if (playingBot && currentPlayer === "O") {
+        return;
+    }
+
+    board[index] = currentPlayer;
+
+    render();
+
+    const result =
+        checkWinner();
+
+    if (result) {
+
+        finishGame(result);
+
+        return;
+    }
+
+    currentPlayer =
+        currentPlayer === "X"
+            ? "O"
+            : "X";
+
+    updateStatus();
+
+
+    if (
+        playingBot &&
+        currentPlayer === "O"
+    ) {
+
+        setTimeout(botMove, 450);
+
+    }
+
+}
+
+
+function botMove() {
+
+    if (gameOver) {
+        return;
+    }
+
+    const move =
+        findBestMove();
+
+    if (move === -1) {
+        return;
+    }
+
+    board[move] = "O";
+
+    render();
+
+    const result =
+        checkWinner();
+
+    if (result) {
+
+        finishGame(result);
+
+        return;
+    }
+
+    currentPlayer = "X";
+
+    updateStatus();
+
+}
+
+
+function findBestMove() {
+
+    /*
+       First try to win.
+    */
+
+    for (let i = 0; i < 9; i++) {
+
+        if (board[i] === "") {
+
+            board[i] = "O";
+
+            if (
+                getWinnerOnly() === "O"
+            ) {
+
+                board[i] = "";
+
+                return i;
+            }
+
+            board[i] = "";
+
+        }
+
+    }
+
+
+    /*
+       Then block player X.
+    */
+
+    for (let i = 0; i < 9; i++) {
+
+        if (board[i] === "") {
+
+            board[i] = "X";
+
+            if (
+                getWinnerOnly() === "X"
+            ) {
+
+                board[i] = "";
+
+                return i;
+            }
+
+            board[i] = "";
+
+        }
+
+    }
+
+
+    /*
+       Take the center.
+    */
+
+    if (board[4] === "") {
+        return 4;
+    }
+
+
+    /*
+       Take a corner.
+    */
+
+    const corners = [
+        0,
+        2,
+        6,
+        8
+    ];
+
+    const availableCorners =
+        corners.filter(
+            i => board[i] === ""
+        );
+
+    if (availableCorners.length) {
+
+        return availableCorners[
+            Math.floor(
+                Math.random() *
+                availableCorners.length
+            )
+        ];
+
+    }
+
+
+    /*
+       Take any remaining position.
+    */
+
+    const available =
+        board
+            .map((value, index) =>
+                value === ""
+                    ? index
+                    : -1
+            )
+            .filter(index => index !== -1);
+
+    if (!available.length) {
+        return -1;
+    }
+
+    return available[
+        Math.floor(
+            Math.random() *
+            available.length
+        )
+    ];
+
+}
+
+
+function getWinnerOnly() {
+
+    for (const pattern of winningPatterns) {
+
+        const [a, b, c] =
+            pattern;
+
+        if (
+            board[a] &&
+            board[a] === board[b] &&
+            board[a] === board[c]
+        ) {
+
+            return board[a];
+
+        }
+
+    }
+
+    return null;
+
+}
+
+
+function checkWinner() {
+
+    const winner =
+        getWinnerOnly();
+
+    if (winner) {
+
+        return {
+            type: "win",
+            player: winner
+        };
+
+    }
+
+    if (
+        board.every(
+            cell => cell !== ""
+        )
+    ) {
+
+        return {
+            type: "draw"
+        };
+
+    }
+
+    return null;
+
+}
+
+
+function finishGame(result) {
+
+    gameOver = true;
+
+    if (result.type === "draw") {
+
+        scores.draw++;
+
+        scoreDraw.textContent =
+            scores.draw;
+
+        statusText.textContent =
+            "It's a draw!";
+
+        return;
+    }
+
+
+    scores[result.player]++;
+
+    if (result.player === "X") {
+
+        scoreX.textContent =
+            scores.X;
+
+    } else {
+
+        scoreO.textContent =
+            scores.O;
+
+    }
+
+
+    statusText.textContent =
+        `Player ${result.player} wins!`;
+
+
+    winningPatterns.forEach(pattern => {
+
+        const [a, b, c] =
+            pattern;
+
+        if (
+            board[a] === result.player &&
+            board[b] === result.player &&
+            board[c] === result.player
+        ) {
+
+            cells[a].classList.add("win");
+            cells[b].classList.add("win");
+            cells[c].classList.add("win");
+
+        }
+
+    });
+
+}
+
+
+function render() {
+
+    cells.forEach((cell, index) => {
+
+        cell.textContent =
+            board[index];
+
+        cell.classList.remove(
+            "x",
+            "o"
+        );
+
+        if (board[index] === "X") {
+            cell.classList.add("x");
+        }
+
+        if (board[index] === "O") {
+            cell.classList.add("o");
+        }
+
+    });
+
+}
+
+
+function updateStatus() {
+
+    if (playingBot) {
+
+        if (currentPlayer === "X") {
+
+            statusText.textContent =
+                "Your turn — you are X";
+
+        } else {
+
+            statusText.textContent =
+                "Bot is thinking...";
+
+        }
+
+    } else {
+
+        statusText.textContent =
+            `Player ${currentPlayer}'s turn`;
+
+    }
+
+}
+
+
+function resetBoard() {
+
+    board = [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+    ];
+
+    currentPlayer = "X";
+
+    gameOver = false;
+
+    cells.forEach(cell => {
+
+        cell.textContent = "";
+
+        cell.classList.remove(
+            "x",
+            "o",
+            "win"
+        );
+
+    });
+
+    updateStatus();
+
+}
+
+
+twoPlayer.addEventListener(
+    "click",
+    () => {
+
+        playingBot = false;
+
+        twoPlayer.classList.add(
+            "active"
+        );
+
+        botMode.classList.remove(
+            "active"
+        );
+
+        resetBoard();
+
+    }
+);
+
+
+botMode.addEventListener(
+    "click",
+    () => {
+
+        playingBot = true;
+
+        botMode.classList.add(
+            "active"
+        );
+
+        twoPlayer.classList.remove(
+            "active"
+        );
+
+        resetBoard();
+
+    }
+);
+
+
+restart.addEventListener(
+    "click",
+    resetBoard
+);
+
+
+updateStatus();
+
+</script>
+
+</body>
+</html>
