@@ -1,0 +1,842 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Connect Four | Duo Arena</title>
+
+<style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+    background:
+        radial-gradient(circle at top left, #0d7a45, transparent 35%),
+        radial-gradient(circle at bottom right, #06452a, transparent 35%),
+        #031c11;
+    color: white;
+    padding: 20px;
+}
+
+.container {
+    width: min(850px, 100%);
+    margin: auto;
+    text-align: center;
+}
+
+.back {
+    display: inline-block;
+    color: #baffd7;
+    text-decoration: none;
+    margin-bottom: 15px;
+    font-weight: bold;
+}
+
+h1 {
+    font-size: clamp(2rem, 6vw, 3.5rem);
+    margin-bottom: 8px;
+}
+
+.subtitle {
+    color: #a9c5b5;
+    margin-bottom: 25px;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.mode-btn,
+.new-game {
+    padding: 12px 20px;
+    border-radius: 12px;
+    background: #087a43;
+    color: white;
+    border: 1px solid rgba(255,255,255,.1);
+}
+
+.mode-btn.active {
+    background: #9bea3c;
+    color: #062e1b;
+}
+
+.mode-btn:hover,
+.new-game:hover {
+    transform: translateY(-2px);
+}
+
+.scoreboard {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.score {
+    min-width: 110px;
+    padding: 12px 18px;
+    border-radius: 14px;
+    background: rgba(8, 43, 26, .9);
+    border: 1px solid rgba(255,255,255,.08);
+}
+
+.score strong {
+    display: block;
+    font-size: 1.4rem;
+    color: #9bea3c;
+}
+
+.status {
+    min-height: 30px;
+    color: #d9ffe8;
+    font-weight: bold;
+    margin-bottom: 15px;
+}
+
+.game-board {
+    width: min(650px, 95vw);
+    aspect-ratio: 7 / 6;
+    margin: auto;
+    padding: 12px;
+    background: #075b34;
+    border-radius: 20px;
+    box-shadow:
+        0 20px 50px rgba(0,0,0,.4),
+        inset 0 0 20px rgba(0,0,0,.2);
+
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 8px;
+}
+
+.cell {
+    border: none;
+    border-radius: 50%;
+    background: #02190f;
+    aspect-ratio: 1;
+    position: relative;
+    transition: transform .15s ease;
+}
+
+.cell:hover {
+    transform: scale(.94);
+}
+
+.cell.x {
+    background: #9bea3c;
+    box-shadow: 0 0 18px rgba(155,234,60,.45);
+}
+
+.cell.o {
+    background: #21d879;
+    box-shadow: 0 0 18px rgba(33,216,121,.45);
+}
+
+.cell.win {
+    outline: 5px solid white;
+    transform: scale(.9);
+}
+
+.legend {
+    margin: 20px 0;
+    color: #a9c5b5;
+}
+
+.x-text {
+    color: #9bea3c;
+}
+
+.o-text {
+    color: #21d879;
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 12px;
+    }
+
+    .game-board {
+        gap: 5px;
+        padding: 8px;
+        border-radius: 14px;
+    }
+
+    .score {
+        min-width: 90px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <a class="back" href="../index.html">← Back to Duo Arena</a>
+
+    <h1>Connect Four</h1>
+
+    <p class="subtitle">
+        Drop your pieces and connect four in a row.
+    </p>
+
+    <div class="controls">
+        <button class="mode-btn active" id="twoPlayerBtn">
+            2 Players
+        </button>
+
+        <button class="mode-btn" id="botBtn">
+            Play vs Bot
+        </button>
+
+        <button class="new-game" id="newGameBtn">
+            New Game
+        </button>
+    </div>
+
+    <div class="scoreboard">
+        <div class="score">
+            <strong id="xScore">0</strong>
+            Player X
+        </div>
+
+        <div class="score">
+            <strong id="drawScore">0</strong>
+            Draws
+        </div>
+
+        <div class="score">
+            <strong id="oScore">0</strong>
+            Player O
+        </div>
+    </div>
+
+    <div class="status" id="status">
+        Player X's turn
+    </div>
+
+    <div class="game-board" id="gameBoard"></div>
+
+    <div class="legend">
+        <span class="x-text">● Player X</span>
+        &nbsp; | &nbsp;
+        <span class="o-text">● Player O</span>
+    </div>
+
+</div>
+
+<script>
+const ROWS = 6;
+const COLS = 7;
+
+let board;
+let currentPlayer;
+let gameOver;
+let botMode = false;
+let botThinking = false;
+
+let scores = {
+    X: 0,
+    O: 0,
+    draw: 0
+};
+
+const gameBoard = document.getElementById("gameBoard");
+const statusText = document.getElementById("status");
+
+const twoPlayerBtn = document.getElementById("twoPlayerBtn");
+const botBtn = document.getElementById("botBtn");
+const newGameBtn = document.getElementById("newGameBtn");
+
+const xScore = document.getElementById("xScore");
+const oScore = document.getElementById("oScore");
+const drawScore = document.getElementById("drawScore");
+
+
+/* -----------------------------
+   START GAME
+----------------------------- */
+
+function startGame() {
+
+    board = Array.from(
+        { length: ROWS },
+        () => Array(COLS).fill("")
+    );
+
+    currentPlayer = "X";
+    gameOver = false;
+    botThinking = false;
+
+    renderBoard();
+
+    statusText.textContent = "Player X's turn";
+}
+
+
+/* -----------------------------
+   RENDER BOARD
+----------------------------- */
+
+function renderBoard(highlight = []) {
+
+    gameBoard.innerHTML = "";
+
+    for (let row = 0; row < ROWS; row++) {
+
+        for (let col = 0; col < COLS; col++) {
+
+            const cell = document.createElement("button");
+
+            cell.className = "cell";
+
+            if (board[row][col] === "X") {
+                cell.classList.add("x");
+            }
+
+            if (board[row][col] === "O") {
+                cell.classList.add("o");
+            }
+
+            const isWinningCell = highlight.some(
+                position =>
+                    position.row === row &&
+                    position.col === col
+            );
+
+            if (isWinningCell) {
+                cell.classList.add("win");
+            }
+
+            cell.addEventListener("click", () => {
+
+                if (gameOver || botThinking) {
+                    return;
+                }
+
+                if (botMode && currentPlayer === "O") {
+                    return;
+                }
+
+                dropPiece(col);
+            });
+
+            gameBoard.appendChild(cell);
+        }
+    }
+}
+
+
+/* -----------------------------
+   DROP PIECE
+----------------------------- */
+
+function dropPiece(col) {
+
+    const row = getAvailableRow(board, col);
+
+    if (row === -1) {
+        return;
+    }
+
+    board[row][col] = currentPlayer;
+
+    const winningCells = getWinningCells(
+        board,
+        currentPlayer
+    );
+
+    if (winningCells.length > 0) {
+
+        gameOver = true;
+
+        scores[currentPlayer]++;
+
+        updateScores();
+
+        renderBoard(winningCells);
+
+        statusText.textContent =
+            `Player ${currentPlayer} wins!`;
+
+        return;
+    }
+
+    if (isBoardFull(board)) {
+
+        gameOver = true;
+
+        scores.draw++;
+
+        updateScores();
+
+        renderBoard();
+
+        statusText.textContent =
+            "It's a draw!";
+
+        return;
+    }
+
+    currentPlayer =
+        currentPlayer === "X" ? "O" : "X";
+
+    statusText.textContent =
+        `Player ${currentPlayer}'s turn`;
+
+    renderBoard();
+
+    if (botMode && currentPlayer === "O") {
+        botMove();
+    }
+}
+
+
+/* -----------------------------
+   FIND EMPTY ROW
+----------------------------- */
+
+function getAvailableRow(state, col) {
+
+    for (let row = ROWS - 1; row >= 0; row--) {
+
+        if (state[row][col] === "") {
+            return row;
+        }
+    }
+
+    return -1;
+}
+
+
+/* -----------------------------
+   WIN CHECK
+----------------------------- */
+
+function getWinningCells(state, player) {
+
+    const directions = [
+        [0, 1],
+        [1, 0],
+        [1, 1],
+        [1, -1]
+    ];
+
+    for (let row = 0; row < ROWS; row++) {
+
+        for (let col = 0; col < COLS; col++) {
+
+            if (state[row][col] !== player) {
+                continue;
+            }
+
+            for (const [dr, dc] of directions) {
+
+                const cells = [];
+
+                for (let i = 0; i < 4; i++) {
+
+                    const r = row + dr * i;
+                    const c = col + dc * i;
+
+                    if (
+                        r < 0 ||
+                        r >= ROWS ||
+                        c < 0 ||
+                        c >= COLS ||
+                        state[r][c] !== player
+                    ) {
+                        break;
+                    }
+
+                    cells.push({
+                        row: r,
+                        col: c
+                    });
+                }
+
+                if (cells.length === 4) {
+                    return cells;
+                }
+            }
+        }
+    }
+
+    return [];
+}
+
+
+/* -----------------------------
+   BOARD FULL
+----------------------------- */
+
+function isBoardFull(state) {
+
+    return state[0].every(
+        cell => cell !== ""
+    );
+}
+
+
+/* -----------------------------
+   BOT
+----------------------------- */
+
+function botMove() {
+
+    botThinking = true;
+
+    statusText.textContent =
+        "Bot is thinking...";
+
+    setTimeout(() => {
+
+        const bestColumn = findBestMove();
+
+        botThinking = false;
+
+        dropPiece(bestColumn);
+
+    }, 450);
+}
+
+
+/* -----------------------------
+   BOT MOVE LOGIC
+----------------------------- */
+
+function findBestMove() {
+
+    const validColumns = getValidColumns(board);
+
+    if (validColumns.length === 0) {
+        return 0;
+    }
+
+    /*
+       1. Try to win immediately.
+    */
+
+    for (const col of validColumns) {
+
+        const testBoard = cloneBoard(board);
+
+        const row =
+            getAvailableRow(testBoard, col);
+
+        testBoard[row][col] = "O";
+
+        if (getWinningCells(testBoard, "O").length) {
+            return col;
+        }
+    }
+
+
+    /*
+       2. Block the player if they can win.
+    */
+
+    for (const col of validColumns) {
+
+        const testBoard = cloneBoard(board);
+
+        const row =
+            getAvailableRow(testBoard, col);
+
+        testBoard[row][col] = "X";
+
+        if (getWinningCells(testBoard, "X").length) {
+            return col;
+        }
+    }
+
+
+    /*
+       3. Use minimax for a stronger decision.
+    */
+
+    let bestScore = -Infinity;
+    let bestColumn = validColumns[0];
+
+    for (const col of validColumns) {
+
+        const testBoard = cloneBoard(board);
+
+        const row =
+            getAvailableRow(testBoard, col);
+
+        testBoard[row][col] = "O";
+
+        const score = minimax(
+            testBoard,
+            4,
+            false
+        );
+
+        if (score > bestScore) {
+
+            bestScore = score;
+            bestColumn = col;
+        }
+    }
+
+    return bestColumn;
+}
+
+
+/* -----------------------------
+   MINIMAX
+----------------------------- */
+
+function minimax(state, depth, maximizing) {
+
+    if (getWinningCells(state, "O").length) {
+        return 100000 + depth;
+    }
+
+    if (getWinningCells(state, "X").length) {
+        return -100000 - depth;
+    }
+
+    if (depth === 0 || isBoardFull(state)) {
+        return evaluateBoard(state);
+    }
+
+    const validColumns =
+        getValidColumns(state);
+
+    if (maximizing) {
+
+        let best = -Infinity;
+
+        for (const col of validColumns) {
+
+            const next = cloneBoard(state);
+
+            const row =
+                getAvailableRow(next, col);
+
+            next[row][col] = "O";
+
+            best = Math.max(
+                best,
+                minimax(next, depth - 1, false)
+            );
+        }
+
+        return best;
+
+    } else {
+
+        let best = Infinity;
+
+        for (const col of validColumns) {
+
+            const next = cloneBoard(state);
+
+            const row =
+                getAvailableRow(next, col);
+
+            next[row][col] = "X";
+
+            best = Math.min(
+                best,
+                minimax(next, depth - 1, true)
+            );
+        }
+
+        return best;
+    }
+}
+
+
+/* -----------------------------
+   BOARD EVALUATION
+----------------------------- */
+
+function evaluateBoard(state) {
+
+    let score = 0;
+
+    // Prefer the center.
+    const centerColumn = Math.floor(COLS / 2);
+
+    for (let row = 0; row < ROWS; row++) {
+
+        if (state[row][centerColumn] === "O") {
+            score += 4;
+        }
+
+        if (state[row][centerColumn] === "X") {
+            score -= 4;
+        }
+    }
+
+    const directions = [
+        [0, 1],
+        [1, 0],
+        [1, 1],
+        [1, -1]
+    ];
+
+    for (let row = 0; row < ROWS; row++) {
+
+        for (let col = 0; col < COLS; col++) {
+
+            for (const [dr, dc] of directions) {
+
+                const window = [];
+
+                for (let i = 0; i < 4; i++) {
+
+                    const r = row + dr * i;
+                    const c = col + dc * i;
+
+                    if (
+                        r >= 0 &&
+                        r < ROWS &&
+                        c >= 0 &&
+                        c < COLS
+                    ) {
+                        window.push(state[r][c]);
+                    }
+                }
+
+                if (window.length === 4) {
+                    score += evaluateWindow(window);
+                }
+            }
+        }
+    }
+
+    return score;
+}
+
+
+function evaluateWindow(window) {
+
+    const botCount =
+        window.filter(x => x === "O").length;
+
+    const playerCount =
+        window.filter(x => x === "X").length;
+
+    const emptyCount =
+        window.filter(x => x === "").length;
+
+    let score = 0;
+
+    if (botCount === 4) {
+        score += 100;
+    } else if (botCount === 3 && emptyCount === 1) {
+        score += 15;
+    } else if (botCount === 2 && emptyCount === 2) {
+        score += 5;
+    }
+
+    if (playerCount === 3 && emptyCount === 1) {
+        score -= 18;
+    } else if (playerCount === 2 && emptyCount === 2) {
+        score -= 4;
+    }
+
+    return score;
+}
+
+
+/* -----------------------------
+   HELPERS
+----------------------------- */
+
+function getValidColumns(state) {
+
+    const columns = [];
+
+    for (let col = 0; col < COLS; col++) {
+
+        if (state[0][col] === "") {
+            columns.push(col);
+        }
+    }
+
+    return columns;
+}
+
+
+function cloneBoard(state) {
+
+    return state.map(row => [...row]);
+}
+
+
+/* -----------------------------
+   SCORES
+----------------------------- */
+
+function updateScores() {
+
+    xScore.textContent = scores.X;
+    oScore.textContent = scores.O;
+    drawScore.textContent = scores.draw;
+}
+
+
+/* -----------------------------
+   BUTTONS
+----------------------------- */
+
+twoPlayerBtn.addEventListener("click", () => {
+
+    botMode = false;
+
+    twoPlayerBtn.classList.add("active");
+    botBtn.classList.remove("active");
+
+    startGame();
+});
+
+
+botBtn.addEventListener("click", () => {
+
+    botMode = true;
+
+    botBtn.classList.add("active");
+    twoPlayerBtn.classList.remove("active");
+
+    startGame();
+});
+
+
+newGameBtn.addEventListener("click", () => {
+    startGame();
+});
+
+
+/* -----------------------------
+   INITIALIZE
+----------------------------- */
+
+updateScores();
+startGame();
+
+</script>
+
+</body>
+</html>
